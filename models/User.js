@@ -65,6 +65,11 @@ const userSchema = new mongoose.Schema(
       default: "active",
       trim: true,
     },
+    /** Pending tip balance in cents — incremented on completed Stripe checkout */
+    walletBalance: {
+      type: Number,
+      default: 0,
+    },
     notificationPreferences: {
       type: notificationPreferencesSchema,
       default: () => ({}),

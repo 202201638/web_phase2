@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authAPI } from '@/lib/services/api';
@@ -9,12 +9,19 @@ import { useAuth } from '@/app/providers/AuthProvider';
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
+  const { login, logout, isAuthenticated, loading: authLoading } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // If already authenticated, redirect to discover page
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      router.push('/discover');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +49,7 @@ function LoginPageContent() {
       const from = searchParams.get('from') || (user.role === 'admin' ? '/admin' : '/discover');
       router.push(from);
     } catch (err: any) {
-      const message = err.response?.data?.message || 'Failed to login';
+      const message = err.response?.data?.message || err.response?.data?.error?.message || 'Failed to login';
       setError(message);
     } finally {
       setLoading(false);

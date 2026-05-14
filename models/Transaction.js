@@ -75,7 +75,6 @@ const transactionSchema = new mongoose.Schema({
 transactionSchema.index({ fromUser: 1, createdAt: -1 });
 transactionSchema.index({ toCreator: 1, createdAt: -1 });
 transactionSchema.index({ status: 1 });
-transactionSchema.index({ stripePaymentIntentId: 1 });
 
 // Update the updatedAt field before saving
 transactionSchema.pre('save', function(next) {

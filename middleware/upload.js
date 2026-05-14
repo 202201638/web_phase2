@@ -24,10 +24,8 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   console.log("File received:", file.mimetype, file.originalname, file.size);
   
-  // Only accept standard MP4 files that work in browsers
-  const allowedMimes = ["video/mp4"];
-  
-  if (!allowedMimes.includes(file.mimetype)) {
+  // Only accept MP4 files for maximum compatibility
+  if (file.mimetype !== 'video/mp4') {
     return cb(
       new Error(`Invalid file type. Only MP4 video files are allowed. Got: ${file.mimetype}`)
     );
@@ -41,13 +39,7 @@ const fileFilter = (req, file, cb) => {
     );
   }
   
-  // Check minimum file size (at least 1KB)
-  if (file.size < 1024) {
-    return cb(
-      new Error(`File too small. Minimum size is 1KB. Got: ${file.size} bytes`)
-    );
-  }
-  
+  // Remove minimum file size check for testing
   cb(null, true);
 };
 

@@ -16,7 +16,7 @@ interface Video {
     _id: string;
     username: string;
   };
-  videoUrl: string;
+  videoURL: string;
   thumbnail?: string;
   likes: number;
   reviews: number;
@@ -27,7 +27,6 @@ export default function FollowingPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('newest');
@@ -77,24 +76,64 @@ export default function FollowingPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setPage(1);
     setVideos([]);
     setHasMore(true);
   };
 
   const handleFilterChange = (filter: string) => {
     setSortBy(filter);
-    setPage(1);
     setVideos([]);
     setHasMore(true);
   };
+
+  const fetchMoreVideos = useCallback(async () => {
+    if (loading || !hasMore) return;
+
+    try {
+      setLoading(true);
+      const token = Cookies.get('token');
+      const params: any = { skip: videos.length, limit: 12 };
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+      if (sortBy) {
+        params.sortBy = sortBy;
+      }
+
+      const response = await axios.get(
+        `${API_URL}/videos/feed/following`,
+        {
+          params,
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const newVideos = response.data.data || [];
+      if (newVideos.length === 0) {
+        setHasMore(false);
+      } else {
+        // Deduplicate videos by ID to prevent duplicates
+        setVideos((prev) => {
+          const existingIds = new Set(prev.map(v => v._id));
+          const uniqueNewVideos = newVideos.filter((video: Video) => !existingIds.has(video._id));
+          return [...prev, ...uniqueNewVideos];
+        });
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch videos');
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, hasMore, videos.length, searchQuery, sortBy, API_URL]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          setPage((prev) => prev + 1);
+          fetchMoreVideos();
         }
       },
       { threshold: 0.1 }
@@ -105,55 +144,7 @@ export default function FollowingPage() {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, loading, API_URL]);
-
-  // Fetch additional pages when page changes
-  useEffect(() => {
-    if (page > 1) {
-      const fetchMoreVideos = async () => {
-        try {
-          setLoading(true);
-          const token = Cookies.get('token');
-          const skip = (page - 1) * 12;
-          const params: any = { skip, limit: 12 };
-          if (searchQuery) {
-            params.search = searchQuery;
-          }
-          if (sortBy) {
-            params.sortBy = sortBy;
-          }
-          
-          const response = await axios.get(
-            `${API_URL}/videos/feed/following`,
-            {
-              params,
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          const newVideos = response.data.data || [];
-          if (newVideos.length === 0) {
-            setHasMore(false);
-          } else {
-            // Deduplicate videos by ID to prevent duplicates
-            setVideos((prev) => {
-              const existingIds = new Set(prev.map(v => v._id));
-              const uniqueNewVideos = newVideos.filter((video: Video) => !existingIds.has(video._id));
-              return [...prev, ...uniqueNewVideos];
-            });
-          }
-        } catch (err) {
-          setError(err instanceof Error ? err.message : 'Failed to fetch videos');
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      fetchMoreVideos();
-    }
-  }, [page, API_URL]);
+  }, [hasMore, loading, fetchMoreVideos]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

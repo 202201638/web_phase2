@@ -23,9 +23,8 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Clear token on 401
       Cookies.remove('token');
-      // Only redirect to login if it's not an upload request and we're not already on login page
+      // Only redirect to login if we're not already on login page
       if (typeof window !== 'undefined' && 
-          !error.config?.url?.includes('/videos') && 
           !window.location.pathname.includes('/auth/')) {
         window.location.href = '/auth/login';
       }
@@ -38,6 +37,8 @@ apiClient.interceptors.response.use(
 export const authAPI = {
   register: (data: any) => apiClient.post('/auth/register', data),
   login: (data: any) => apiClient.post('/auth/login', data),
+  /** @description Clears the JWT cookie on the server */
+  logout: () => apiClient.post('/auth/logout'),
   me: () => apiClient.get('/users/me'),
 };
 
@@ -68,6 +69,14 @@ export const videoAPI = {
 export const feedAPI = {
   getFollowingFeed: (params?: any) => apiClient.get('/videos/feed/following', { params }),
   getTrendingFeed: (params?: any) => apiClient.get('/videos/feed/trending', { params }),
+};
+
+// Stripe / Payment APIs
+export const stripeAPI = {
+  createCheckoutSession: (data: any) => apiClient.post('/stripe/create-checkout-session', data),
+  getEarnings: () => apiClient.get('/stripe/earnings'),
+  getTipHistory: () => apiClient.get('/stripe/tip-history'),
+  getCreatorStats: (creatorId: string) => apiClient.get(`/stripe/creator-stats/${creatorId}`),
 };
 
 // Admin APIs

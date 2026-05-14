@@ -7,7 +7,7 @@ import type { Stripe } from '@stripe/stripe-js';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const stripePromise: Promise<Stripe | null> = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51234567890abcdef');
+const stripePromise: Promise<Stripe | null> = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_51TWuE55283q7IHtDuczebHVB5d9l6TbBjMBDYJPelCdOmQnOpNxWxDM3CCfPHcGG2HlapWXZLWDVddDyUKPD4o8n00Em1cY2s1');
 
 interface TipModalProps {
   isOpen: boolean;
@@ -20,9 +20,9 @@ interface TipModalProps {
 
 export default function TipModal({ isOpen, onClose, creatorId, creatorName, videoId, videoTitle }: TipModalProps) {
   const [amount, setAmount] = useState('');
-  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const predefinedAmounts = [5, 10, 25, 50, 100];
 
@@ -55,14 +55,19 @@ export default function TipModal({ isOpen, onClose, creatorId, creatorName, vide
         return;
       }
 
+      const payload: any = {
+        creatorId,
+        amount: parseFloat(amount),
+        message: message.trim()
+      };
+
+      if (videoId) {
+        payload.videoId = videoId;
+      }
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/stripe/create-checkout-session`,
-        {
-          creatorId,
-          amount: parseFloat(amount),
-          videoId: videoId || null,
-          message: message.trim()
-        },
+        payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -72,14 +77,18 @@ export default function TipModal({ isOpen, onClose, creatorId, creatorName, vide
       );
 
       const { url } = response.data.data;
-      
-      // Redirect to Stripe Checkout
-      const stripe = await stripePromise;
-      if (stripe) {
-        window.location.href = response.data.data.url;
+      if (!url) {
+        throw new Error('Stripe checkout session URL was not returned');
       }
-      
-      onClose();
+
+      if (url.includes('checkout.stripe.com')) {
+        window.location.href = url;
+      } else if (url.startsWith('https://checkout.stripe.com/pay/')) {
+        alert('Development Mode: Mock checkout session created.\n\nIn production, you would be redirected to Stripe Checkout.\n\nSession ID: ' + url.split('/').pop());
+        onClose();
+      } else {
+        window.location.href = url;
+      }
     } catch (err: any) {
       console.error('Tip error:', err);
       setError(err.response?.data?.message || err.message || 'Failed to process tip');

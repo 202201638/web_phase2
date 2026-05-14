@@ -16,7 +16,7 @@ interface Video {
     _id: string;
     username: string;
   };
-  videoUrl: string;
+  videoURL: string;
   likes: number;
   likedBy?: string[];
   createdAt: string;

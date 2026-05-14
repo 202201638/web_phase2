@@ -16,7 +16,7 @@ interface Video {
     _id: string;
     username: string;
   };
-  videoUrl: string;
+  videoURL: string;
   thumbnail?: string;
   likes: number;
   reviews: number;

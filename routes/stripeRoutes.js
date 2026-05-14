@@ -3,11 +3,12 @@ const { protect } = require('../middleware/auth');
 const { createCheckoutSession, getCreatorEarnings, getUserTipHistory } = require('../config/stripe');
 const asyncHandler = require('../middleware/asyncHandler');
 const mongoose = require('mongoose');
+const { createTipSchema, validate } = require('../validators/validationSchemas');
 
 const router = express.Router();
 
 // Create checkout session for tipping
-router.post('/create-checkout-session', protect, asyncHandler(async (req, res) => {
+router.post('/create-checkout-session', protect, validate(createTipSchema), asyncHandler(async (req, res) => {
   const { creatorId, amount, videoId, message } = req.body;
 
   // Validate input
@@ -45,7 +46,7 @@ router.post('/create-checkout-session', protect, asyncHandler(async (req, res) =
     console.error('Error creating checkout session:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to create checkout session'
+      message: error?.message || 'Failed to create checkout session'
     });
   }
 }));
@@ -65,7 +66,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 router.get('/earnings', protect, asyncHandler(async (req, res) => {
   try {
     const earnings = await getCreatorEarnings(req.user._id);
-    
+
     res.status(200).json({
       success: true,
       data: earnings
@@ -83,7 +84,7 @@ router.get('/earnings', protect, asyncHandler(async (req, res) => {
 router.get('/tip-history', protect, asyncHandler(async (req, res) => {
   try {
     const tipHistory = await getUserTipHistory(req.user._id);
-    
+
     res.status(200).json({
       success: true,
       data: tipHistory
@@ -102,7 +103,7 @@ router.get('/creator-stats/:creatorId', asyncHandler(async (req, res) => {
   try {
     const { creatorId } = req.params;
     const Transaction = require('../models/Transaction');
-    
+
     const stats = await Transaction.aggregate([
       {
         $match: {

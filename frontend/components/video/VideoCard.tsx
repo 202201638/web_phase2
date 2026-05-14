@@ -20,7 +20,7 @@ interface Video {
     _id: string;
     username: string;
   };
-  videoUrl: string;
+  videoURL: string;
   thumbnail?: string;
   likes: number;
   reviews: number;
@@ -34,10 +34,10 @@ const getThumbnailUrl = (thumbnail: string | undefined) => {
   return `http://localhost:5000${thumbnail}`;
 };
 
-const getVideoUrl = (videoUrl: string | undefined) => {
-  if (!videoUrl) return undefined;
-  if (videoUrl.startsWith('http')) return videoUrl;
-  return `http://localhost:5000${videoUrl}`;
+const getVideoUrl = (videoURL: string | undefined) => {
+  if (!videoURL) return undefined;
+  if (videoURL.startsWith('http')) return videoURL;
+  return `http://localhost:5000${videoURL}`;
 };
 
 export default function VideoCard({ video }: { video: Video }) {
@@ -120,11 +120,11 @@ export default function VideoCard({ video }: { video: Video }) {
   };
   
   // Get the video URL - try all possible fields
-  const rawVideoUrl = video.videoUrl || (video as any).videoURL || (video as any).videoFile;
-  const fullVideoUrl = rawVideoUrl ? 
-    (rawVideoUrl.startsWith('http') ? rawVideoUrl : `http://localhost:5000${rawVideoUrl}`) : 
+  const rawVideoUrl = video.videoURL || (video as any).videoUrl || (video as any).videoFile;
+  const fullVideoUrl = rawVideoUrl ?
+    (rawVideoUrl.startsWith('http') ? rawVideoUrl : `http://localhost:5000${rawVideoUrl}`) :
     null;
-  
+
   console.log('Final video URL:', fullVideoUrl);
 
   return (
@@ -184,13 +184,26 @@ export default function VideoCard({ video }: { video: Video }) {
               )
             )}
             
-            {/* Glassmorphism overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            
-            {/* Play button overlay */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center">
+            {/* Glassmorphism overlay with video info */}
+            <div className="absolute inset-0 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center">
+              {/* Play button */}
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-3 border border-white/30">
                 <PlayIcon className="w-6 h-6 text-white" />
+              </div>
+              {/* Video info */}
+              <p className="text-white text-sm font-semibold text-center px-4 line-clamp-2 drop-shadow-md">
+                {video.title}
+              </p>
+              <div className="flex items-center gap-3 mt-2 text-white/90 text-xs">
+                <span className="flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  </svg>
+                  {likesCount}
+                </span>
+                <span className="bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                  {formatDuration(video.duration)}
+                </span>
               </div>
             </div>
             

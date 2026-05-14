@@ -47,7 +47,7 @@ const getPublicFeed = async () => {
 
     ...video,
 
-    videoUrl: video.videoURL, // Convert PascalCase to camelCase
+    videoURL: video.videoURL, // Keep videoURL field name
 
     reviews: video.reviewCount || 0 // Use saved review count
 
@@ -71,13 +71,13 @@ const getVideoById = async (videoId) => {
 
   
 
-  // Transform field names and add reviews count
+  // Keep videoURL field name for frontend compatibility
 
   return {
 
     ...video,
 
-    videoUrl: video.videoURL, // Convert PascalCase to camelCase
+    videoURL: video.videoURL, // Keep videoURL field name
 
     reviews: video.reviewCount || 0 // Use saved review count
 
@@ -473,7 +473,7 @@ const getFollowingFeed = async (userId, { skip, limit, search, sortBy }) => {
 
     ...video,
 
-    videoUrl: video.videoURL, // Convert PascalCase to camelCase
+    videoURL: video.videoURL, // Keep videoURL field name
 
     reviews: video.reviewCount || 0 // Use saved review count
 
@@ -559,7 +559,7 @@ const getTrendingFeed = async ({ skip, limit, search, sortBy }) => {
 
     ...video,
 
-    videoUrl: video.videoURL,
+    videoURL: video.videoURL, // Keep videoURL field name
 
     reviews: video.reviewCount || 0 // Use saved review count
 
@@ -585,7 +585,7 @@ const getUserVideos = async (userId) => {
 
     ...video,
 
-    videoUrl: video.videoURL,
+    videoURL: video.videoURL, // Keep videoURL field name
 
     reviews: video.reviewCount || 0 // Use saved review count
 
@@ -609,7 +609,7 @@ const getLikedVideos = async (userId) => {
 
   const mappedVideos = videos.map(video => ({
     ...video,
-    videoUrl: video.videoURL, // Map videoURL to videoUrl for frontend
+    videoURL: video.videoURL, // Keep videoURL field name
     reviews: video.reviewCount || 0,
     views: video.viewscount || 0 // Map viewscount to views for frontend
   }));

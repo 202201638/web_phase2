@@ -22,7 +22,7 @@ const createVideo = asyncHandler(async (req, res) => {
 
   try {
 
-    // Skip FFmpeg for now - use default values
+    // Use default values to avoid FFmpeg issues
     const duration = 60; // Default 1 minute
     const thumbnail = null;
 
@@ -53,25 +53,6 @@ const createVideo = asyncHandler(async (req, res) => {
     const video = await videoService.createVideo(req.user._id, videoData);
 
     console.log("Video created successfully:", video._id);
-
-    // Emit real-time video upload notification
-    try {
-      const { getIO } = require("../config/socket");
-      const io = getIO();
-      
-      // Broadcast to all users for real-time feed updates
-      io.emit('new-video', {
-        videoId: video._id,
-        videoTitle: video.title,
-        uploaderUsername: req.user.username,
-        uploaderId: req.user._id,
-        timestamp: new Date().toISOString()
-      });
-
-      console.log(`New video broadcast: ${video.title} by ${req.user.username}`);
-    } catch (socketError) {
-      console.error('Error broadcasting new video:', socketError);
-    }
 
     res.status(201).json({ success: true, data: video });
 

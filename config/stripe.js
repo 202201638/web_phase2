@@ -1,5 +1,8 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_51234567890abcdef');
+// Use Stripe secret key from environment variable
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripe = require('stripe')(stripeSecretKey);
 const Transaction = require('../models/Transaction');
+const User = require('../models/User');
 const { getIO } = require('./socket');
 
 // Create a checkout session for tipping
@@ -8,6 +11,7 @@ const createCheckoutSession = async (userId, creatorId, amount, videoId, message
     // Calculate fees (Stripe takes 2.9% + 30¢)
     const stripeFee = Math.round((amount * 0.029) + 30);
     const netAmount = amount - stripeFee;
+    const unitAmount = Math.round(amount * 100);
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -16,10 +20,9 @@ const createCheckoutSession = async (userId, creatorId, amount, videoId, message
           currency: 'usd',
           product_data: {
             name: 'Tip for Creator',
-            description: message || 'Support your favorite creator',
-            images: []
+            description: message || 'Support your favorite creator'
           },
-          unit_amount: amount * 100, // Convert to cents
+          unit_amount: unitAmount,
         },
         quantity: 1,
       }],
@@ -34,12 +37,11 @@ const createCheckoutSession = async (userId, creatorId, amount, videoId, message
         stripeFee: stripeFee.toString(),
         netAmount: netAmount.toString()
       },
-      customer_email: undefined, // Will be set by Stripe
     });
 
     return session;
   } catch (error) {
-    console.error('Error creating checkout session:', error);
+    console.error('Error creating checkout session:', error.message);
     throw error;
   }
 };
@@ -110,6 +112,11 @@ const handleCheckoutSessionCompleted = async (session) => {
     });
 
     await transaction.save();
+
+    // Increment creator's wallet balance by the net amount
+    await User.findByIdAndUpdate(session.metadata.toCreator, {
+      $inc: { walletBalance: parseInt(session.metadata.netAmount) }
+    });
 
     // Send real-time notification to creator
     const io = getIO();

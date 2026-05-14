@@ -32,7 +32,7 @@ export default function UploadPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // Only accept MP4 files
+      // Only accept MP4 files for maximum compatibility
       if (selectedFile.type !== 'video/mp4') {
         setError('Please select a valid MP4 video file');
         return;
@@ -45,11 +45,7 @@ export default function UploadPage() {
         return;
       }
       
-      // Validate file size (min 1MB, max 500MB)
-      if (selectedFile.size < 1024 * 1024) {
-        setError('File size must be at least 1MB for a valid video');
-        return;
-      }
+      // Remove file size check for testing
       if (selectedFile.size > 500 * 1024 * 1024) {
         setError('File size must be less than 500MB');
         return;
@@ -77,15 +73,8 @@ export default function UploadPage() {
       formData.append('title', title);
       formData.append('description', description);
 
-      // Get token and manually add Authorization header
-      const token = Cookies.get('token');
-
       // Upload video with progress tracking
       const response = await apiClient.post('/videos', formData, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-          // Don't set Content-Type - let Axios set it with boundary for FormData
-        },
         onUploadProgress: (progressEvent: any) => {
           const percent = Math.round(
             (progressEvent.loaded * 100) / (progressEvent.total || 1)
@@ -188,7 +177,7 @@ export default function UploadPage() {
                       : 'Drag and drop your video here or click to browse'}
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
-                    Min 1MB • Max 500MB • MP4 format only • Max 5 minutes
+                    Max 500MB • MP4 format only • Max 5 minutes
                   </p>
                 </div>
               </div>

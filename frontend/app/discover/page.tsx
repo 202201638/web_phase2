@@ -15,7 +15,7 @@ interface Video {
     _id: string;
     username: string;
   };
-  videoUrl: string;
+  videoURL: string;
   thumbnail?: string;
   likes: number;
   reviews: number;
@@ -26,7 +26,6 @@ export default function DiscoverPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
@@ -45,7 +44,7 @@ export default function DiscoverPage() {
         }
         
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/videos/feed/trending`,
+          `${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/videos`,
           { params }
         );
 
@@ -68,14 +67,12 @@ export default function DiscoverPage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setPage(1);
     setVideos([]);
     setHasMore(true);
   };
 
   const handleFilterChange = (filter: string) => {
     setSortBy(filter);
-    setPage(1);
     setVideos([]);
     setHasMore(true);
   };
@@ -85,16 +82,16 @@ export default function DiscoverPage() {
 
     try {
       setLoading(true);
-      const params: any = { skip: page * 12, limit: 12 };
+      const params: any = { skip: videos.length, limit: 12 };
       if (searchQuery) {
         params.search = searchQuery;
       }
       if (sortBy) {
         params.sortBy = sortBy;
       }
-      
+
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/videos/feed/trending`,
+        `${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/videos`,
         { params }
       );
 
@@ -108,27 +105,19 @@ export default function DiscoverPage() {
       if (newVideos.length === 0) {
         setHasMore(false);
       }
-      setPage(prev => prev + 1);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch more videos');
     } finally {
       setLoading(false);
     }
-  }, [loading, hasMore, page, searchQuery]);
-
-  // Fetch additional pages when page changes
-  useEffect(() => {
-    if (page > 1) {
-      fetchMoreVideos();
-    }
-  }, [page]);
+  }, [loading, hasMore, videos.length, searchQuery, sortBy]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading) {
-          setPage((prev) => prev + 1);
+          fetchMoreVideos();
         }
       },
       { threshold: 0.1 }
@@ -139,7 +128,7 @@ export default function DiscoverPage() {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, loading]);
+  }, [hasMore, loading, fetchMoreVideos]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">

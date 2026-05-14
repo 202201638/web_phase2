@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const protectedRoutes = ['/upload', '/settings', '/my-videos', '/admin'];
-const publicRoutes = ['/auth/login', '/auth/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get('token')?.value;
-  const forceAuth = request.nextUrl.searchParams.get('force') === 'true';
 
   // Check if route requires authentication
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route));
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
   // If accessing protected route without token, redirect to login
   if (isProtectedRoute && !token) {
@@ -20,13 +17,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // If already authenticated and accessing login/register, redirect to home
-  // unless force=true parameter is set
-  if (isPublicRoute && token && !forceAuth) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/';
-    return NextResponse.redirect(url);
-  }
+  // Auth pages (/auth/login, /auth/register) are ALWAYS accessible —
+  // even when logged in. The login page handles session cleanup on mount
+  // to support account switching.
 
   // For admin routes, we would need to validate role
   // This would typically require fetching user data on the server

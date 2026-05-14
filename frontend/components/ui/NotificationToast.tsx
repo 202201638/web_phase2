@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { XMarkIcon, HeartIcon, ChatBubbleLeftIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ChatBubbleLeftIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
 
 interface NotificationData {
@@ -20,6 +20,10 @@ interface NotificationToastProps {
   onClose: () => void;
 }
 
+/**
+ * A glassmorphism-styled toast notification that slides in from the right.
+ * Auto-dismisses after 5 seconds. Supports stacking via NotificationContainer.
+ */
 export default function NotificationToast({ type, data, onClose }: NotificationToastProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -42,11 +46,11 @@ export default function NotificationToast({ type, data, onClose }: NotificationT
   const getIcon = () => {
     switch (type) {
       case 'like':
-        return <HeartSolidIcon className="w-5 h-5 text-red-500" />;
+        return <HeartSolidIcon className="w-5 h-5 text-red-400" />;
       case 'comment':
-        return <ChatBubbleLeftIcon className="w-5 h-5 text-blue-500" />;
+        return <ChatBubbleLeftIcon className="w-5 h-5 text-blue-400" />;
       case 'tip':
-        return <CurrencyDollarIcon className="w-5 h-5 text-green-500" />;
+        return <CurrencyDollarIcon className="w-5 h-5 text-green-400" />;
       default:
         return null;
     }
@@ -55,11 +59,11 @@ export default function NotificationToast({ type, data, onClose }: NotificationT
   const getTitle = () => {
     switch (type) {
       case 'like':
-        return `${data.likerUsername} liked your video`;
+        return `❤️ ${data.likerUsername} liked your video`;
       case 'comment':
-        return `${data.commenterUsername} commented on your video`;
+        return `💬 ${data.commenterUsername} commented on your video`;
       case 'tip':
-        return `You received a $${data.amount} tip!`;
+        return `💸 You received a $${data.amount} tip!`;
       default:
         return 'Notification';
     }
@@ -67,9 +71,9 @@ export default function NotificationToast({ type, data, onClose }: NotificationT
 
   const getSubtitle = () => {
     if (data.videoTitle) {
-      return data.videoTitle.length > 30 
+      return `"${data.videoTitle.length > 30 
         ? data.videoTitle.substring(0, 30) + '...' 
-        : data.videoTitle;
+        : data.videoTitle}"`;
     }
     if (type === 'tip' && data.message) {
       return data.message.length > 30 
@@ -104,31 +108,29 @@ export default function NotificationToast({ type, data, onClose }: NotificationT
   return (
     <div
       className={`
-        fixed top-4 right-4 z-50 max-w-sm w-full
+        w-full max-w-sm
         transform transition-all duration-300 ease-in-out
         ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
       `}
     >
-      <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
-        {/* Glassmorphism effect */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent backdrop-blur-sm"></div>
-        
+      {/* Glassmorphism card */}
+      <div className="backdrop-blur-md bg-white/20 border border-white/30 rounded-xl shadow-xl overflow-hidden">
         <div className="relative p-4">
           <div className="flex items-start">
             {/* Icon */}
             <div className="flex-shrink-0 mr-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
                 {getIcon()}
               </div>
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-semibold text-gray-900">
                 {getTitle()}
               </p>
               {getSubtitle() && (
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-gray-600 mt-0.5">
                   {getSubtitle()}
                 </p>
               )}
@@ -138,7 +140,7 @@ export default function NotificationToast({ type, data, onClose }: NotificationT
                 </p>
                 <button
                   onClick={handleAction}
-                  className="text-xs text-purple-600 hover:text-purple-700 font-medium"
+                  className="text-xs text-purple-600 hover:text-purple-700 font-medium transition-colors"
                 >
                   {getActionText()}
                 </button>
@@ -147,7 +149,10 @@ export default function NotificationToast({ type, data, onClose }: NotificationT
 
             {/* Close button */}
             <button
-              onClick={onClose}
+              onClick={() => {
+                setIsVisible(false);
+                setTimeout(onClose, 300);
+              }}
               className="flex-shrink-0 ml-2 text-gray-400 hover:text-gray-600 transition-colors"
             >
               <XMarkIcon className="w-4 h-4" />
@@ -159,7 +164,10 @@ export default function NotificationToast({ type, data, onClose }: NotificationT
   );
 }
 
-// Notification container component
+/**
+ * Container component that manages stacking multiple toast notifications.
+ * Listens for 'notification' CustomEvents dispatched by the SocketService.
+ */
 export function NotificationContainer() {
   const [notifications, setNotifications] = useState<Array<{
     id: string;
@@ -188,7 +196,7 @@ export function NotificationContainer() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 space-y-3">
       {notifications.map((notification) => (
         <NotificationToast
           key={notification.id}

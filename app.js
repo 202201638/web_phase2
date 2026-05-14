@@ -94,6 +94,7 @@ app.use('/uploads', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
@@ -148,6 +149,8 @@ app.use('/uploads', (req, res, next) => {
 
           'Access-Control-Allow-Headers': 'Range, Content-Type',
 
+          'Cross-Origin-Resource-Policy': 'cross-origin',
+
         };
 
         
@@ -199,6 +202,8 @@ app.use('/uploads', (req, res, next) => {
       res.setHeader('Access-Control-Allow-Methods', 'GET');
 
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Range');
+
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
       res.setHeader('Accept-Ranges', 'bytes');
 

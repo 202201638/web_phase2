@@ -10,13 +10,22 @@ const helmetConfig = helmet({
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      scriptSrc: ["'self'"],
-      connectSrc: ["'self'", "ws:", "wss:"],
-      frameSrc: ["'none'"],
+      scriptSrc: ["'self'", "https://js.stripe.com"],
+      connectSrc: [
+        "'self'",
+        "ws:",
+        "wss:",
+        "http://localhost:5000",
+        "http://localhost:9000",
+        "https://api.stripe.com",
+      ],
+      frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com"],
       objectSrc: ["'none'"],
+      mediaSrc: ["'self'", "http://localhost:5000", "https:"],
     },
   },
   crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
 });
 
 // CORS configuration
@@ -45,7 +54,7 @@ const corsConfig = cors({
 // General API rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 500, // limit each IP to 500 requests per windowMs (increased from 100)
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
@@ -110,13 +119,8 @@ const socketLimiter = rateLimit({
     success: false,
     message: 'Too many connection attempts, please try again later.'
   },
-  keyGenerator: (req) => {
-    return req.ip || req.connection.remoteAddress;
-  },
-  skip: (req) => {
-    // Skip rate limiting for socket.io upgrade requests
-    return req.url.includes('socket.io/');
-  }
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 module.exports = {
